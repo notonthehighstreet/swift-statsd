@@ -1,8 +1,8 @@
 import XCTest
 
-@testable import StatsDtest
+@testable import StatsDTestSuite
 
 XCTMain([
-  StatsDTests(),
-  ConnectionTests()
+  testCase(StatsDTests.allTests),
+  testCase(ConnectionTests.allTests)
 ])
