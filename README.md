@@ -20,6 +20,9 @@ You can now run the build inside the container, note due to the immutability of 
 $ make test
 ```
 
+## statsD info
+https://github.com/etsy/statsd
+
 ## Starting statsD server
 ```
 $ docker run -p 8080:80 -p 8125:8125/udp -d hopsoft/graphite-statsd

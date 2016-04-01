@@ -13,7 +13,7 @@ public enum SocketError: ErrorProtocol {
 }
 
 public protocol Socket {
-  func write(host: String, port: Int32, data: String) -> (Bool, SocketError?)
+  func write(host: String, port: Int, data: String) -> (Bool, SocketError?)
 }
 
 public class UDPSocket: Socket
@@ -25,8 +25,7 @@ public class UDPSocket: Socket
 
   var socketfd: Int32 = SOCKET_INVALID_DESCRIPTOR
 
-  public func write(host: String, port: Int32, data: String) -> (Bool, SocketError?){
-    print("Writing data: " + data)
+  public func write(host: String, port: Int, data: String) -> (Bool, SocketError?){
     do {
       try createSocket()
       defer {
@@ -63,7 +62,7 @@ public class UDPSocket: Socket
 		}
   }
 
-  private func setAddressInfo(host: String, port: Int32, targetInfo: inout UnsafeMutablePointer<addrinfo>) throws -> Void {
+  private func setAddressInfo(host: String, port: Int, targetInfo: inout UnsafeMutablePointer<addrinfo>) throws -> Void {
     #if os(Linux)
 			var hints = addrinfo(
 				ai_flags: AI_PASSIVE,
