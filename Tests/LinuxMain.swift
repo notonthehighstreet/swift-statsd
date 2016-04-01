@@ -4,5 +4,5 @@ import XCTest
 
 XCTMain([
   testCase(StatsDTests.allTests),
-  testCase(ConnectionTests.allTests)
+  testCase(UDPSocketTests.allTests)
 ])
