@@ -2,7 +2,7 @@ build:
 	@echo --- Building package
 	swift build -Xcc -fblocks
 
-test: build
+test: clean build
 	@echo --- Running tests
 	swift test
 
