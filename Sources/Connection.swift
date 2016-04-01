@@ -1,12 +1,11 @@
 #if os(OSX) || os(iOS) || os(tvOS) || os(watchOS)
     import Darwin
-    import Foundation
-    import Socket
 #elseif os(Linux)
     import Glibc
-    import Foundation
-    import Socket
 #endif
+
+import Foundation
+import Socket
 
 public class Connection
 {
