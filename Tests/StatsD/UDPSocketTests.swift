@@ -6,9 +6,9 @@ import XCTest
 class UDPSocketTests: XCTestCase {
   func testSocket() {
     let socket = UDPSocket()
-    socket.write("192.168.99.100", port: 8125, data: "deploys.test.balls:1|c")
+    let result = socket.write("192.168.99.100", port: 8125, data: "deploys.test.balls:1|c")
     //XCTAssertEqual(1, 1, "Message shown when assert fails")
-    //XCTAssertNil(nil, "Message shown when assert fails")
+    XCTAssertNil(result.1, "Write shoud not have returned an error")
   }
 }
 
