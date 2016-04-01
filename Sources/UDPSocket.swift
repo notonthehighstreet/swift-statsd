@@ -6,7 +6,17 @@
 
 import Foundation
 
-public class UDPSocket
+public enum SocketError: ErrorProtocol {
+  case UnableToCreateSocket
+  case FailedToResolveAddress
+  case FailedToSendData
+}
+
+public protocol Socket {
+  func write(host: String, port: Int32, data: String) -> (Bool, SocketError?)
+}
+
+public class UDPSocket: Socket
 {
   public static let SOCKET_INVALID_DESCRIPTOR = Int32(-1)
   public static let IPV4 = Int32(AF_INET)
@@ -14,12 +24,6 @@ public class UDPSocket
   public static let UDP = Int32(IPPROTO_UDP)
 
   var socketfd: Int32 = SOCKET_INVALID_DESCRIPTOR
-
-  public enum SocketError: ErrorProtocol {
-    case UnableToCreateSocket
-    case FailedToResolveAddress
-    case FailedToSendData
-  }
 
   public func write(host: String, port: Int32, data: String) -> (Bool, SocketError?){
     print("Writing data: " + data)
