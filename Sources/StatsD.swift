@@ -7,7 +7,7 @@ public class StatsD
   var port:Int
   var socket:Socket
   var sendCallback:(() -> Void)?
-  var counters = [String: Int32]()
+  var buffer = [String]()
   var timer:NSTimer?
 
   // optional sendCallback is a closure which is called whenever the class sends data to the statsD server
@@ -19,7 +19,7 @@ public class StatsD
     self.sendCallback = sendCallback
 
     self.timer = NSTimer.scheduledTimer(1, repeats: true) { (timer: NSTimer) -> Void in
-      self.sendCounters()
+      self.sendBuffer()
     }
   }
 
@@ -29,22 +29,28 @@ public class StatsD
   }
 
   public func increment(bucket:String) {
-    if counters[bucket] != nil {
-      counters[bucket]! += 1
-    } else {
-      counters[bucket] = 1
-    }
+    //format [bucket]:[count]|c
+    buffer.append("\(bucket):1|c")
+  }
+
+  public func timer(bucket:String, closure: (() -> Void)) {
+    // format [bucket]:[duration]|ms
+
+    let startTime = NSDate()
+    closure()
+    let endTime = NSDate()
+
+    let duration = endTime.timeIntervalSinceDate(startTime) / 1000
+    buffer.append("\(bucket):\(duration)|ms")
   }
 
   // This is not the most efficient way to do this, multiple counts can be concatonated and sent
-  private func sendCounters() {
-    for (bucket, count) in counters {
-      //format [bucket]:[count]|c
-      let data = bucket + ":" + String(count) + "|c"
+  private func sendBuffer() {
+    for data in buffer {
       send(data)
     }
 
-    counters = [String: Int32]()
+    buffer = [String]()
 
     if sendCallback != nil {
       sendCallback!()

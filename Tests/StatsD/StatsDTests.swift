@@ -25,19 +25,52 @@ class StatsDTests: XCTestCase {
     XCTAssertNotNil(statsD.socket, "Socket should not be nil")
   }
 
-  func testIncrementShouldIncreaseBucketCountByOne() {
+  func testIncrementShouldIncreaseBufferByOne() {
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
     statsD.increment("mybucket")
 
-    XCTAssertEqual(1, statsD.counters["mybucket"], "Counter for mybucket should be 1")
+    XCTAssertEqual(1, statsD.buffer.count, "Buffer should container 1 item")
   }
 
-  func testIncrementTwiceShouldIncreaseBucketCountByTwo() {
+  func testIncrementTwiceShouldIncreaseBufferByTwo() {
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
     statsD.increment("mybucket")
     statsD.increment("mybucket")
 
-    XCTAssertEqual(2, statsD.counters["mybucket"], "Counter for mybucket should be 2")
+    XCTAssertEqual(2, statsD.buffer.count, "Buffer should container 2 items")
+  }
+
+  func testIncrementShouldSetCorrectBuffer() {
+    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    statsD.increment("mybucket")
+
+    XCTAssertEqual("mybucket:1|c", statsD.buffer[0], "Buffer should contain correct value")
+  }
+
+  func testTimerShouldIncreaseBufferByOne() {
+    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    statsD.timer("mybucket") {
+      print("Setting Timer")
+    }
+
+    XCTAssertEqual(1, statsD.buffer.count, "Buffer should container 1 items")
+  }
+
+  func testTimerShouldSetCorrectBuffer() {
+    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    statsD.timer("mybucket") {
+      print("Setting Timer")
+    }
+
+    let buffer = statsD.buffer[0]
+
+    XCTAssertEqual(
+      "mybucket",
+      buffer.componentsSeparatedByString(":")[0],
+      "Buffer should contain bucket")
+    XCTAssertTrue(
+      Float(buffer.componentsSeparatedByString(":")[1].componentsSeparatedByString("|")[0]) > 0,
+      "Buffer should contain duration")
   }
 
   func testSendsDataAfterInterval() {
@@ -65,7 +98,7 @@ class StatsDTests: XCTestCase {
     let expectation = expectationWithDescription("Empty bucket after send")
     var statsD: StatsD?
     statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket()) {
-      XCTAssertEqual(0, statsD!.counters.count, "Expected to have emptied bucket")
+      XCTAssertEqual(0, statsD!.buffer.count, "Expected to have emptied bucket")
       expectation.fulfill()
     }
 
@@ -87,7 +120,11 @@ extension StatsDTests {
     static var allTests: [(String, StatsDTests -> () throws -> Void)] {
         return [
           ("testInitSetsCorrectValues", testInitSetsCorrectValues),
-          ("testIncrementShouldIncreaseBucketCountByOne", testIncrementShouldIncreaseBucketCountByOne),
+          ("testIncrementShouldIncreaseBufferByOne", testIncrementShouldIncreaseBufferByOne),
+          ("testIncrementTwiceShouldIncreaseBufferByTwo", testIncrementTwiceShouldIncreaseBufferByTwo),
+          ("testIncrementShouldSetCorrectBuffer", testIncrementShouldSetCorrectBuffer),
+          ("testTimerShouldIncreaseBufferByOne", testTimerShouldIncreaseBufferByOne),
+          ("testTimerShouldSetCorrectBuffer", testTimerShouldSetCorrectBuffer),
           ("testSendsDataAfterInterval", testSendsDataAfterInterval),
           ("testEmptiesBucketAfterSend", testEmptiesBucketAfterSend)
         ]
