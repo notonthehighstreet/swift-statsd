@@ -7,7 +7,7 @@ For more information on libC sockets please see: http://www.gnu.org/software/lib
 # Build Instructions:
 ## Install latest swift 3 version in Docker container  
 ```
-$ docker run -i -t -p 8090:8090 -v $(pwd):/src -name swifty -w /src ibmcom/kitura-ubuntu:latest /bin/bash  
+$ docker run -i -t -p 8090:8090 -v $(pwd):/src --name swifty -w /src ibmcom/kitura-ubuntu:latest /bin/bash  
 $ cd /root  
 $ curl https://swift.org/builds/development/ubuntu1510/swift-DEVELOPMENT-SNAPSHOT-2016-03-24-a/swift-DEVELOPMENT-SNAPSHOT-2016-03-24-a-ubuntu15.10.tar.gz -o swift-DEVELOPMENT-SNAPSHOT-2016-03-24-a-ubuntu15.10.tar.gz  
 $ tar -xf swift-DEVELOPMENT-SNAPSHOT-2016-03-24-a-ubuntu15.10.tar.gz  
