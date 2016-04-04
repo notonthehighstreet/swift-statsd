@@ -2,6 +2,6 @@ import PackageDescription
 
 let package = Package(
 	name: "StatsD",
-	targets: [Target(name: "StatsD")]
-	//exclude: ["Tests"]
+	targets: [Target(name: "StatsD")],
+	exclude: ["Tests"]
 )
