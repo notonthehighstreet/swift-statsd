@@ -10,7 +10,7 @@ For more information on libC sockets please see: http://www.gnu.org/software/lib
 
 ### Start docker container
 ```bash
-$ docker run -i -t -p 8090:8090 -v $(pwd):/src --name swifty -w /src ibmcom/kitura-ubuntu:latest /bin/bash  
+$ docker run --rm -i -t -p 8090:8090 -v $(pwd):/src -w /src ibmcom/kitura-ubuntu:latest /bin/bash  
 ```  
 
 ### Build and run tests

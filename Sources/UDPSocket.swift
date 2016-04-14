@@ -20,8 +20,13 @@ public class UDPSocket: Socket
 {
   public static let SOCKET_INVALID_DESCRIPTOR = Int32(-1)
   public static let IPV4 = Int32(AF_INET)
-  public static let DGRAM = Int32(SOCK_DGRAM.rawValue)
   public static let UDP = Int32(IPPROTO_UDP)
+
+  #if os(Linux)
+  public static let DGRAM = Int32(SOCK_DGRAM.rawValue)
+  #else
+  public static let DGRAM = Int32(SOCK_DGRAM)
+  #endif
 
   var socketfd: Int32 = SOCKET_INVALID_DESCRIPTOR
 
@@ -67,7 +72,7 @@ public class UDPSocket: Socket
 			var hints = addrinfo(
 				ai_flags: AI_PASSIVE,
 				ai_family: AF_UNSPEC,
-				ai_socktype: Int32(SOCK_DGRAM.rawValue),
+				ai_socktype: UDPSocket.DGRAM,
 				ai_protocol: 0,
 				ai_addrlen: 0,
 				ai_addr: nil,
@@ -77,7 +82,7 @@ public class UDPSocket: Socket
 			var hints = addrinfo(
 				ai_flags: AI_PASSIVE,
 				ai_family: AF_UNSPEC,
-				ai_socktype: Int32(SOCK_DGRAM.rawValue),
+				ai_socktype: UDPSocket.DGRAM,
 				ai_protocol: 0,
 				ai_addrlen: 0,
 				ai_canonname: nil,
