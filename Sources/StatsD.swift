@@ -10,6 +10,10 @@ public class StatsD
   var buffer = [String]()
   var timer:NSTimer?
 
+  // implement locking for thread safety
+  var bufferLock = NSLock()
+  var sendLock = NSLock()
+
   // optional sendCallback is a closure which is called whenever the class sends data to the statsD server
   // can be used for testing or logging.
   init(host:String, port:Int, socket: Socket, sendCallback: (() -> Void)? = nil) {
@@ -32,8 +36,13 @@ public class StatsD
     self.timer!.invalidate()
   }
 
+  //format [bucket]:[count]|c
   public func increment(bucket:String) {
-    //format [bucket]:[count]|c
+    bufferLock.lock()
+    defer {
+      bufferLock.unlock()
+    }
+
     buffer.append("\(bucket):1|c")
   }
 
@@ -45,21 +54,34 @@ public class StatsD
     let endTime = NSDate().timeIntervalSince1970
 
     let duration = (endTime - startTime) / 1000
+
+    bufferLock.lock()
+    defer {
+      bufferLock.unlock()
+    }
     buffer.append("\(bucket):\(duration)|ms")
   }
 
   // This is not the most efficient way to do this, multiple counts can be concatonated and sent
   @objc
   private func sendBuffer() {
+    bufferLock.lock()
     if buffer.count < 1 {
+      bufferLock.unlock()
       return
     }
-    
-    for data in buffer {
-      send(data)
+    var sendBuffer = buffer // copy the send data to reduce blocking on send
+    buffer = [String]() // clear buffer
+    bufferLock.unlock()
+
+    sendLock.lock()
+    defer {
+      sendLock.unlock()
     }
 
-    buffer = [String]()
+    for data in sendBuffer {
+      send(data)
+    }
 
     if sendCallback != nil {
       sendCallback!()
