@@ -68,7 +68,7 @@ Once started the interface to see posted metrics can been accessed at http://DOC
 ## TODO
 - Implement:
   - Sets
-  - Gauges
+  - ~~Gauges~~
   - Sampling
 - Implement updated socket which supports IPV6 and TCP
 - Set build on CI

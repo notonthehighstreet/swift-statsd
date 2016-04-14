@@ -56,6 +56,13 @@ class StatsDTests: XCTestCase {
     XCTAssertEqual(1, statsD.buffer.count, "Buffer should container 1 items")
   }
 
+  func testGaugeShouldSetCorrectBuffer() {
+    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    statsD.gauge("mybucket", value: 333)
+
+    XCTAssertEqual("mybucket:333|g", statsD.buffer[0], "Buffer should contain correct value")
+  }
+
   #if os(Linux)
   func testTimerShouldSetCorrectBuffer() {
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
@@ -88,7 +95,7 @@ class StatsDTests: XCTestCase {
 
     statsD.increment("mybucket")
 
-    waitForExpectationsWithTimeout(2) { error in
+    waitForExpectationsWithTimeout(3) { error in
       if let error = error {
         print("Error: \(error.localizedDescription)")
       }
@@ -132,6 +139,7 @@ extension StatsDTests {
           ("testIncrementShouldSetCorrectBuffer", testIncrementShouldSetCorrectBuffer),
           ("testTimerShouldIncreaseBufferByOne", testTimerShouldIncreaseBufferByOne),
           ("testTimerShouldSetCorrectBuffer", testTimerShouldSetCorrectBuffer),
+          ("testGaugeShouldSetCorrectBuffer", testGaugeShouldSetCorrectBuffer),
           ("testSendsDataAfterInterval", testSendsDataAfterInterval),
           ("testEmptiesBucketAfterSend", testEmptiesBucketAfterSend)
         ]
