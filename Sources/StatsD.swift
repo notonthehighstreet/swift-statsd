@@ -6,7 +6,7 @@ public class StatsD
   var host:String
   var port:Int
   var socket:Socket
-  var sendCallback:(() -> Void)?
+  var sendCallback:((Bool, SocketError?) -> Void)?
   var buffer = [String]()
   var timer:NSTimer?
 
@@ -16,7 +16,7 @@ public class StatsD
 
   // optional sendCallback is a closure which is called whenever the class sends data to the statsD server
   // can be used for testing or logging.
-  public init(host:String, port:Int, socket: Socket, sendCallback: (() -> Void)? = nil) {
+  public init(host:String, port:Int, socket: Socket, sendCallback: ((Bool, SocketError?) -> Void)? = nil) {
     self.socket = socket
     self.port = port
     self.host = host
@@ -120,13 +120,12 @@ public class StatsD
     for data in sendBuffer {
       send(data)
     }
-
-    if sendCallback != nil {
-      sendCallback!()
-    }
   }
 
   private func send(data:String) {
-    socket.write(host, port:port, data:data)
+    let (success, error) = socket.write(host, port:port, data:data)
+    if sendCallback != nil {
+      sendCallback!(success, error)
+    }
   }
 }

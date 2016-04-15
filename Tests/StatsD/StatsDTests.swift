@@ -9,7 +9,7 @@ class MockSocket :Socket {
 
   internal func write(host: String, port: Int, data: String) -> (Bool, SocketError?) {
     timesWritten += 1
-    return (true, nil)
+    return (true, SocketError.FailedToSendData)
   }
 }
 
@@ -84,7 +84,7 @@ class StatsDTests: XCTestCase {
   func testSendsDataAfterInterval() {
     let mockSocket = MockSocket()
     let expectation = expectationWithDescription("Send data after interval")
-    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket) {
+    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket) { (success: Bool, error: SocketError?) in
       XCTAssertEqual(1, mockSocket.timesWritten, "Expected to have called write")
       expectation.fulfill()
     }
@@ -105,7 +105,7 @@ class StatsDTests: XCTestCase {
   func testEmptiesBucketAfterSend() {
     let expectation = expectationWithDescription("Empty bucket after send")
     var statsD: StatsD?
-    statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket()) {
+    statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket()) { (success: Bool, error: SocketError?) in
       XCTAssertEqual(0, statsD!.buffer.count, "Expected to have emptied bucket")
       expectation.fulfill()
     }
@@ -116,7 +116,30 @@ class StatsDTests: XCTestCase {
 
     statsD!.increment("mybucket")
 
-    waitForExpectationsWithTimeout(2) { error in
+    waitForExpectationsWithTimeout(3) { error in
+      if let error = error {
+        print("Error: \(error.localizedDescription)")
+      }
+    }
+  }
+
+  func testDoesCallbackWithParametersAfterSend() {
+    let mockSocket = MockSocket()
+    let expectation = expectationWithDescription("Send data after interval")
+    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket) { (success: Bool, error: SocketError?) in
+
+      XCTAssertTrue(success, "Expected to have returned success on callback")
+      XCTAssertNotNil(error, "Expected to have returned error on callback")
+      expectation.fulfill()
+    }
+
+    defer {
+      statsD.dispose()
+    }
+
+    statsD.increment("mybucket")
+
+    waitForExpectationsWithTimeout(3) { error in
       if let error = error {
         print("Error: \(error.localizedDescription)")
       }
@@ -127,6 +150,7 @@ class StatsDTests: XCTestCase {
     func testEmptiesBucketAfterSend() {}
     func testSendsDataAfterInterval() {}
     func testTimerShouldSetCorrectBuffer() {}
+    func testDoesCallbackWithParametersAfterSend() {}
   #endif
 }
 
@@ -141,7 +165,8 @@ extension StatsDTests {
           ("testTimerShouldSetCorrectBuffer", testTimerShouldSetCorrectBuffer),
           ("testGaugeShouldSetCorrectBuffer", testGaugeShouldSetCorrectBuffer),
           ("testSendsDataAfterInterval", testSendsDataAfterInterval),
-          ("testEmptiesBucketAfterSend", testEmptiesBucketAfterSend)
+          ("testEmptiesBucketAfterSend", testEmptiesBucketAfterSend),
+          ("testDoesCallbackWithParametersAfterSend", testDoesCallbackWithParametersAfterSend)
         ]
     }
 }
