@@ -16,7 +16,7 @@ public class StatsD
 
   // optional sendCallback is a closure which is called whenever the class sends data to the statsD server
   // can be used for testing or logging.
-  init(host:String, port:Int, socket: Socket, sendCallback: (() -> Void)? = nil) {
+  public init(host:String, port:Int, socket: Socket, sendCallback: (() -> Void)? = nil) {
     self.socket = socket
     self.port = port
     self.host = host

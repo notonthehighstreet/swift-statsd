@@ -6,16 +6,6 @@
 
 import Foundation
 
-public enum SocketError: ErrorProtocol {
-  case UnableToCreateSocket
-  case FailedToResolveAddress
-  case FailedToSendData
-}
-
-public protocol Socket {
-  func write(host: String, port: Int, data: String) -> (Bool, SocketError?)
-}
-
 public class UDPSocket: Socket
 {
   public static let SOCKET_INVALID_DESCRIPTOR = Int32(-1)
@@ -30,28 +20,7 @@ public class UDPSocket: Socket
 
   var socketfd: Int32 = SOCKET_INVALID_DESCRIPTOR
 
-  public func write(host: String, port: Int, data: String) -> (Bool, SocketError?){
-    do {
-      try createSocket()
-      defer {
-        close()
-      }
-
-      var targetInfo = UnsafeMutablePointer<addrinfo>(allocatingCapacity: 1)
-      try setAddressInfo(host, port: port, targetInfo: &targetInfo)
-      defer {
-  			if targetInfo != nil {
-  				freeaddrinfo(targetInfo)
-  			}
-  		}
-
-      try sendData(data, targetInfo: targetInfo)
-
-      return (true, nil)
-    } catch {
-      return (false, error as? SocketError)
-    }
-  }
+  public init() {}
 
   private func createSocket() throws -> Void{
     #if os(Linux)
@@ -98,7 +67,7 @@ public class UDPSocket: Socket
     }
   }
 
-  public func sendData(data: String, targetInfo: UnsafeMutablePointer<addrinfo>) throws -> Void {
+  private func sendData(data: String, targetInfo: UnsafeMutablePointer<addrinfo>) throws -> Void {
     var sendFlags: Int32 = 0
     var size:Int = 0
 
@@ -138,5 +107,30 @@ public class UDPSocket: Socket
     }
 
 		self.socketfd = UDPSocket.SOCKET_INVALID_DESCRIPTOR
+  }
+}
+
+extension UDPSocket {
+  public func write(host: String, port: Int, data: String) -> (Bool, SocketError?){
+    do {
+      try createSocket()
+      defer {
+        close()
+      }
+
+      var targetInfo = UnsafeMutablePointer<addrinfo>(allocatingCapacity: 1)
+      try setAddressInfo(host, port: port, targetInfo: &targetInfo)
+      defer {
+  			if targetInfo != nil {
+  				freeaddrinfo(targetInfo)
+  			}
+  		}
+
+      try sendData(data, targetInfo: targetInfo)
+
+      return (true, nil)
+    } catch {
+      return (false, error as? SocketError)
+    }
   }
 }
