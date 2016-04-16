@@ -1,6 +1,6 @@
 public protocol StatsDProtocol {
   /**
-    dispose stops sending statistics and allows the object to be garbage collectable
+    dispose stops sending statistics
   */
   func dispose()
 

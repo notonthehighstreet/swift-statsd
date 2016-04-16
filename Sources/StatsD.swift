@@ -14,8 +14,26 @@ public class StatsD
   var bufferLock = NSLock()
   var sendLock = NSLock()
 
-  // optional sendCallback is a closure which is called whenever the class sends data to the statsD server
-  // can be used for testing or logging.
+  /**
+    class initialiser
+
+    - Parameters:
+      - host: ip address or fqdn of the StatsD server
+      - port: udp port number for the StatsD server
+      - socket: socket communication instance
+      - sendCallback: optional closure which is fired everytime statistics are sent to the server, this block contains a boolean
+      for the outcome for sending data and an error object.  In the instance of being unable to open a socket to the server
+      false and an error will be returned.  Because we are sending a UDP packet we will not get any response from the server
+      in the instance of a malformed request or server malfunction.
+
+      ```
+        let statsD = StatsD("127.0.0.1", port: 8125, socket: UDPSocket(),
+          sendCallback: {(success: Bool, error: SocketError?) in
+            print("Sent data to server")
+          }
+        )
+      ```
+  */
   public init(host:String, port:Int, socket: Socket, sendCallback: ((Bool, SocketError?) -> Void)? = nil) {
     self.socket = socket
     self.port = port
@@ -23,7 +41,7 @@ public class StatsD
     self.sendCallback = sendCallback
 
     #if os(Linux)
-    self.timer = NSTimer.scheduledTimer(1, repeats: true) { (timer: NSTimer) -> Void in
+    self.timer = NSTimer.scheduledTimer(NSTimeInterval(0.1), repeats: true) { (timer: NSTimer) -> Void in
       self.sendBuffer()
     }
     #else
@@ -31,7 +49,10 @@ public class StatsD
     #endif
   }
 
-  // Must be called when finished with the client or the timer will never shut down
+  /**
+    dispose stops sending statistics and allows the object to be garbage collected, if this method is not called then the timer
+    will not invalidate and will continue for the life of the program.
+  */
   public func dispose() {
     self.timer!.invalidate()
   }

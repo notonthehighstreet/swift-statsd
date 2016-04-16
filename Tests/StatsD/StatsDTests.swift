@@ -19,6 +19,9 @@ class StatsDTests: XCTestCase {
     let host = "127.0.0.1"
     let socket:Socket = MockSocket()
     let statsD = StatsD(host: host, port: port, socket: socket)
+    defer {
+      statsD.dispose()
+    }
 
     XCTAssertEqual(port, statsD.port, "Port should be equal")
     XCTAssertEqual(host, statsD.host, "Host should be equal")
@@ -27,6 +30,10 @@ class StatsDTests: XCTestCase {
 
   func testIncrementShouldIncreaseBufferByOne() {
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    defer {
+      statsD.dispose()
+    }
+
     statsD.increment("mybucket")
 
     XCTAssertEqual(1, statsD.buffer.count, "Buffer should container 1 item")
@@ -34,6 +41,10 @@ class StatsDTests: XCTestCase {
 
   func testIncrementTwiceShouldIncreaseBufferByTwo() {
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    defer {
+      statsD.dispose()
+    }
+
     statsD.increment("mybucket")
     statsD.increment("mybucket")
 
@@ -42,6 +53,10 @@ class StatsDTests: XCTestCase {
 
   func testIncrementShouldSetCorrectBuffer() {
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    defer {
+      statsD.dispose()
+    }
+
     statsD.increment("mybucket")
 
     XCTAssertEqual("mybucket:1|c", statsD.buffer[0], "Buffer should contain correct value")
@@ -49,6 +64,10 @@ class StatsDTests: XCTestCase {
 
   func testTimerShouldIncreaseBufferByOne() {
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    defer {
+      statsD.dispose()
+    }
+
     statsD.timer("mybucket") {
       print("Setting Timer")
     }
@@ -58,6 +77,10 @@ class StatsDTests: XCTestCase {
 
   func testGaugeShouldSetCorrectBuffer() {
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    defer {
+      statsD.dispose()
+    }
+
     statsD.gauge("mybucket", value: 333)
 
     XCTAssertEqual("mybucket:333|g", statsD.buffer[0], "Buffer should contain correct value")
@@ -66,9 +89,14 @@ class StatsDTests: XCTestCase {
   #if os(Linux)
   func testTimerShouldSetCorrectBuffer() {
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket())
+    defer {
+      statsD.dispose()
+    }
+
     statsD.timer("mybucket") {
       print("Setting Timer")
     }
+
 
     let buffer = statsD.buffer[0]
 
@@ -86,6 +114,7 @@ class StatsDTests: XCTestCase {
     let expectation = expectationWithDescription("Send data after interval")
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket) { (success: Bool, error: SocketError?) in
       XCTAssertEqual(1, mockSocket.timesWritten, "Expected to have called write")
+      print("dfdff")
       expectation.fulfill()
     }
 
@@ -127,7 +156,6 @@ class StatsDTests: XCTestCase {
     let mockSocket = MockSocket()
     let expectation = expectationWithDescription("Send data after interval")
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket) { (success: Bool, error: SocketError?) in
-
       XCTAssertTrue(success, "Expected to have returned success on callback")
       XCTAssertNotNil(error, "Expected to have returned error on callback")
       expectation.fulfill()
