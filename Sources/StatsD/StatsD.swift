@@ -10,6 +10,11 @@ public class StatsD
   var buffer = [String]()
   var timer:NSTimer?
 
+  var thread: NSThread?
+  var running = false
+
+  var sendInterval: NSTimeInterval = NSTimeInterval(15) // Send data every 15s
+
   // implement locking for thread safety
   var bufferLock = NSLock()
   var sendLock = NSLock()
@@ -34,19 +39,47 @@ public class StatsD
         )
       ```
   */
-  public init(host:String, port:Int, socket: Socket, sendCallback: ((Bool, SocketError?) -> Void)? = nil) {
+  public convenience init(host:String, port:Int, socket: Socket, sendCallback: ((Bool, SocketError?) -> Void)? = nil) {
+    self.init (host: host, port: port, socket: socket, interval: NSTimeInterval(15), sendCallback: sendCallback)
+  }
+
+  /**
+    class initialiser
+
+    - Parameters:
+      - host: ip address or fqdn of the StatsD server
+      - port: udp port number for the StatsD server
+      - socket: socket communication instance
+      - interval: set the interval that data is sent to the server
+      - sendCallback: optional closure which is fired everytime statistics are sent to the server, this block contains a boolean
+      for the outcome for sending data and an error object.  In the instance of being unable to open a socket to the server
+      false and an error will be returned.  Because we are sending a UDP packet we will not get any response from the server
+      in the instance of a malformed request or server malfunction.
+
+      ```
+        let statsD = StatsD("127.0.0.1", port: 8125, socket: UDPSocket(),
+          sendCallback: {(success: Bool, error: SocketError?) in
+            print("Sent data to server")
+          }
+        )
+      ```
+  */
+  public init(host:String, port:Int, socket: Socket, interval: NSTimeInterval, sendCallback: ((Bool, SocketError?) -> Void)? = nil) {
     self.socket = socket
     self.port = port
     self.host = host
     self.sendCallback = sendCallback
+    self.sendInterval = interval
+
+    self.running = true
 
     #if os(Linux)
-    self.timer = NSTimer.scheduledTimer(NSTimeInterval(0.1), repeats: true) { (timer: NSTimer) -> Void in
-      self.sendBuffer()
-    }
+    thread = NSThread() { self.threadLoop() }
     #else
-    self.timer = NSTimer(timeInterval: 1, target: self, selector: #selector(self.sendBuffer), userInfo: true, repeats: false)
+      thread = NSThread(target: self, selector: #selector(self.threadLoop), object: nil)
     #endif
+
+    thread!.start()
   }
 
   /**
@@ -54,7 +87,8 @@ public class StatsD
     will not invalidate and will continue for the life of the program.
   */
   public func dispose() {
-    self.timer!.invalidate()
+    running = false;
+    thread!.cancel()
   }
 
   /**
@@ -121,8 +155,19 @@ public class StatsD
     buffer.append("\(metric):\(value)|g")
   }
 
-  // This is not the most efficient way to do this, multiple counts can be concatonated and sent
   @objc
+  private func threadLoop() {
+    repeat {
+      sleepForTimeInterval(self.sendInterval)
+      self.sendBuffer()
+    } while (!self.running)
+  }
+
+  private func sleepForTimeInterval(interval: NSTimeInterval) {
+    usleep(UInt32(self.sendInterval) * 1000) // uugh threading is a mess right now, need to refactor to use GCD
+  }
+
+  // This is not the most efficient way to do this, multiple counts can be concatonated and sent
   private func sendBuffer() {
     bufferLock.lock()
     if buffer.count < 1 {
