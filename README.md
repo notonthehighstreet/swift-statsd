@@ -37,9 +37,11 @@ $ make test
 Create an instance of the statsD collector
 ```swift
 let socket = UDPSocket()
-let statsd = StatsD(host: 127.0.0.1, port: 8125, socket, UDPSocket(), sendCallback: {
-  // this block will execute every time data is sent to the server, this is an optional block.
-})
+let statsd = StatsD(host: 127.0.0.1, port: 8125, socket, UDPSocket(),
+  sendCallback: (success: Bool, error: SocketError?) in {
+    // this block will execute every time data is sent to the server, this is an optional block.
+  }
+)
 ```
 
 Send a simple counter

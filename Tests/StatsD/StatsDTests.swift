@@ -16,7 +16,7 @@ class MockSocket :Socket {
 class StatsDTests: XCTestCase {
   func testConvenienceInitSetsCorrectValues() {
     let port = 8125
-    let host = "127.0.0.1"
+    let host = "127.0.0.2"
     let socket:Socket = MockSocket()
     let statsD = StatsD(host: host, port: port, socket: socket)
     defer {
@@ -30,9 +30,9 @@ class StatsDTests: XCTestCase {
 
   func testInitSetsCorrectValues() {
     let port = 8125
-    let host = "127.0.0.1"
+    let host = "127.0.0.2"
     let socket = MockSocket()
-    let interval = NSTimeInterval(15)
+    let interval = 15.0
     let statsD = StatsD(host: host, port: port, socket: socket, interval: interval)
     defer {
       statsD.dispose()
@@ -128,7 +128,7 @@ class StatsDTests: XCTestCase {
   func testSendsDataAfterInterval() {
     let mockSocket = MockSocket()
     let expectation = expectationWithDescription("Send data after interval")
-    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: NSTimeInterval(0.1)) {
+    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: 0.1) {
       (success: Bool, error: SocketError?) in
         XCTAssertEqual(1, mockSocket.timesWritten, "Expected to have called write")
         expectation.fulfill()
@@ -150,7 +150,7 @@ class StatsDTests: XCTestCase {
   func testEmptiesBucketAfterSend() {
     let expectation = expectationWithDescription("Empty bucket after send")
     var statsD: StatsD?
-    statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket(), interval: NSTimeInterval(0.1)) {
+    statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket(), interval: 0.1) {
       (success: Bool, error: SocketError?) in
         XCTAssertEqual(0, statsD!.buffer.count, "Expected to have emptied bucket")
         expectation.fulfill()
@@ -172,7 +172,7 @@ class StatsDTests: XCTestCase {
   func testDoesCallbackWithParametersAfterSend() {
     let mockSocket = MockSocket()
     let expectation = expectationWithDescription("Send data after interval")
-    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: NSTimeInterval(0.1)) {
+    let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: 0.1) {
       (success: Bool, error: SocketError?) in
         XCTAssertTrue(success, "Expected to have returned success on callback")
         XCTAssertNotNil(error, "Expected to have returned error on callback")
@@ -185,7 +185,7 @@ class StatsDTests: XCTestCase {
 
     statsD.increment("mybucket")
 
-    waitForExpectationsWithTimeout(3) { error in
+    waitForExpectationsWithTimeout(10) { error in
       if let error = error {
         print("Error: \(error.localizedDescription)")
       }

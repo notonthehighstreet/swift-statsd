@@ -1,4 +1,5 @@
 import Foundation
+import Dispatch
 
 public class StatsD
 {
@@ -7,13 +8,12 @@ public class StatsD
   var port:Int
   var socket:Socket
   var sendCallback:((Bool, SocketError?) -> Void)?
-  var buffer = [String]()
-  var timer:NSTimer?
 
-  var thread: NSThread?
+  let queue: dispatch_queue_t
   var running = false
+  let sendInterval: Double
 
-  var sendInterval: NSTimeInterval = NSTimeInterval(15) // Send data every 15s
+  var buffer = [String]()
 
   // implement locking for thread safety
   var bufferLock = NSLock()
@@ -40,7 +40,7 @@ public class StatsD
       ```
   */
   public convenience init(host:String, port:Int, socket: Socket, sendCallback: ((Bool, SocketError?) -> Void)? = nil) {
-    self.init (host: host, port: port, socket: socket, interval: NSTimeInterval(15), sendCallback: sendCallback)
+    self.init (host: host, port: port, socket: socket, interval: 1, sendCallback: sendCallback)
   }
 
   /**
@@ -64,7 +64,7 @@ public class StatsD
         )
       ```
   */
-  public init(host:String, port:Int, socket: Socket, interval: NSTimeInterval, sendCallback: ((Bool, SocketError?) -> Void)? = nil) {
+  public init(host:String, port:Int, socket: Socket, interval: Double, sendCallback: ((Bool, SocketError?) -> Void)? = nil) {
     self.socket = socket
     self.port = port
     self.host = host
@@ -73,13 +73,8 @@ public class StatsD
 
     self.running = true
 
-    #if os(Linux)
-    thread = NSThread() { self.threadLoop() }
-    #else
-      thread = NSThread(target: self, selector: #selector(self.threadLoop), object: nil)
-    #endif
-
-    thread!.start()
+    queue = dispatch_queue_create("statsd_queue." + String(NSDate().timeIntervalSince1970), DISPATCH_QUEUE_CONCURRENT)
+    sendLoop(self.sendInterval)
   }
 
   /**
@@ -88,7 +83,6 @@ public class StatsD
   */
   public func dispose() {
     running = false;
-    thread!.cancel()
   }
 
   /**
@@ -155,16 +149,15 @@ public class StatsD
     buffer.append("\(metric):\(value)|g")
   }
 
-  @objc
-  private func threadLoop() {
-    repeat {
-      sleepForTimeInterval(self.sendInterval)
-      self.sendBuffer()
-    } while (!self.running)
-  }
-
-  private func sleepForTimeInterval(interval: NSTimeInterval) {
-    usleep(UInt32(self.sendInterval) * 1000) // uugh threading is a mess right now, need to refactor to use GCD
+  private func sendLoop(interval: Double) {
+    let i = Int64(interval * Double(NSEC_PER_SEC))
+    let delay = dispatch_time(DISPATCH_TIME_NOW, i)
+    dispatch_after(delay, self.queue, {
+      if(self.running) {
+        self.sendBuffer() // send any data in the buffer
+        self.sendLoop(interval) // restart the timer
+      }
+    })
   }
 
   // This is not the most efficient way to do this, multiple counts can be concatonated and sent
