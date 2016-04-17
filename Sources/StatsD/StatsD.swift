@@ -167,6 +167,7 @@ public class StatsD
       bufferLock.unlock()
       return
     }
+
     var sendBuffer = buffer // copy the send data to reduce blocking on send
     buffer = [String]() // clear buffer
     bufferLock.unlock()

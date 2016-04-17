@@ -147,6 +147,59 @@ class StatsDTests: XCTestCase {
     }
   }
 
+  func testSendsDataMultipleTimesAfterInterval() {
+    let mockSocket = MockSocket()
+    let expectation = expectationWithDescription("Send data multiple times after interval")
+
+    var statsD: StatsD? = nil
+    statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: 0.1) {
+      (success: Bool, error: SocketError?) in
+        if mockSocket.timesWritten < 3 {
+          statsD!.increment("mybucket")
+        } else {
+          XCTAssertEqual(3, mockSocket.timesWritten, "Expected to have called write 3 times")
+          expectation.fulfill()
+        }
+    }
+
+    defer {
+      statsD!.dispose()
+    }
+
+    statsD!.increment("mybucket")
+
+    waitForExpectationsWithTimeout(20) { error in
+      if let error = error {
+        print("Error: \(error.localizedDescription)")
+      }
+    }
+  }
+
+  func testDisposeStopsSendingData() {
+    let mockSocket = MockSocket()
+    let expectation = expectationWithDescription("Send data after interval")
+
+    var statsD: StatsD? = nil
+    statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: 0.1) {
+      (success: Bool, error: SocketError?) in
+        statsD!.dispose()
+        statsD!.increment("mybucket")
+        expectation.fulfill()
+    }
+
+    statsD!.increment("mybucket")
+
+    waitForExpectationsWithTimeout(20) { error in
+      if let error = error {
+        print("Error: \(error.localizedDescription)")
+      }
+    }
+
+    usleep(200) // wait to see that a second send has not been called
+
+    XCTAssertEqual(1, mockSocket.timesWritten, "Expected to have called write 1 times")
+  }
+
   func testEmptiesBucketAfterSend() {
     let expectation = expectationWithDescription("Empty bucket after send")
     var statsD: StatsD?
@@ -162,7 +215,7 @@ class StatsDTests: XCTestCase {
 
     statsD!.increment("mybucket")
 
-    waitForExpectationsWithTimeout(3) { error in
+    waitForExpectationsWithTimeout(20) { error in
       if let error = error {
         print("Error: \(error.localizedDescription)")
       }
@@ -197,6 +250,7 @@ class StatsDTests: XCTestCase {
     func testSendsDataAfterInterval() {}
     func testTimerShouldSetCorrectBuffer() {}
     func testDoesCallbackWithParametersAfterSend() {}
+    func testSendsDataMultipleTimesAfterInterval() {}
   #endif
 }
 
@@ -212,6 +266,8 @@ extension StatsDTests {
           ("testTimerShouldSetCorrectBuffer", testTimerShouldSetCorrectBuffer),
           ("testGaugeShouldSetCorrectBuffer", testGaugeShouldSetCorrectBuffer),
           ("testSendsDataAfterInterval", testSendsDataAfterInterval),
+          ("testSendsDataMultipleTimesAfterInterval", testSendsDataMultipleTimesAfterInterval),
+          ("testDisposeStopsSendingData", testDisposeStopsSendingData),
           ("testEmptiesBucketAfterSend", testEmptiesBucketAfterSend),
           ("testDoesCallbackWithParametersAfterSend", testDoesCallbackWithParametersAfterSend)
         ]
