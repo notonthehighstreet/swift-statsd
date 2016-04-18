@@ -251,6 +251,7 @@ class StatsDTests: XCTestCase {
     func testTimerShouldSetCorrectBuffer() {}
     func testDoesCallbackWithParametersAfterSend() {}
     func testSendsDataMultipleTimesAfterInterval() {}
+    func testDisposeStopsSendingData() {}
   #endif
 }
 

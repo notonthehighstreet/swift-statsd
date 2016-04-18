@@ -1,7 +1,7 @@
 import Foundation
 import Dispatch
 
-public class StatsD
+public class StatsD: StatsDProtocol
 {
 
   var host:String
@@ -140,7 +140,7 @@ public class StatsD
       - value: the value to set for the gauge
 
   */
-  func gauge(metric:String, value:Int32) {
+  public func gauge(metric:String, value:Int32) {
     bufferLock.lock()
     defer {
       bufferLock.unlock()
