@@ -36,7 +36,7 @@ public class UDPSocket: Socket
 		}
   }
 
-  private func setAddressInfo(host: String, port: Int, targetInfo: inout UnsafeMutablePointer<addrinfo>) throws -> Void {
+  private func setAddressInfo(host: String, port: Int) throws -> UnsafeMutablePointer<addrinfo>? {
     #if os(Linux)
 			var hints = addrinfo(
 				ai_flags: AI_PASSIVE,
@@ -60,11 +60,14 @@ public class UDPSocket: Socket
 		#endif
 
 		// Retrieve the info on our target...
+    var targetInfo: UnsafeMutablePointer<addrinfo>? = UnsafeMutablePointer<addrinfo>(allocatingCapacity: 1)
 		let status: Int32 = getaddrinfo(host, String(port), &hints, &targetInfo)
 
     if status != 0 {
       throw SocketError.FailedToResolveAddress
     }
+
+    return targetInfo
   }
 
   private func sendData(data: String, targetInfo: UnsafeMutablePointer<addrinfo>) throws -> Void {
@@ -118,15 +121,14 @@ extension UDPSocket {
         close()
       }
 
-      var targetInfo = UnsafeMutablePointer<addrinfo>(allocatingCapacity: 1)
-      try setAddressInfo(host, port: port, targetInfo: &targetInfo)
+      var targetInfo = try setAddressInfo(host: host, port: port)
       defer {
   			if targetInfo != nil {
   				freeaddrinfo(targetInfo)
   			}
   		}
 
-      try sendData(data, targetInfo: targetInfo)
+      try sendData(data: data, targetInfo: targetInfo!)
 
       return (true, nil)
     } catch {

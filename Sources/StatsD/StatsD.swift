@@ -74,7 +74,7 @@ public class StatsD: StatsDProtocol
     self.running = true
 
     queue = dispatch_queue_create("statsd_queue." + String(NSDate().timeIntervalSince1970), DISPATCH_QUEUE_CONCURRENT)
-    sendLoop(self.sendInterval)
+    sendLoop(interval: self.sendInterval)
   }
 
   /**
@@ -155,7 +155,7 @@ public class StatsD: StatsDProtocol
     dispatch_after(delay, self.queue, {
       if(self.running) {
         self.sendBuffer() // send any data in the buffer
-        self.sendLoop(interval) // restart the timer
+        self.sendLoop(interval: interval) // restart the timer
       }
     })
   }
@@ -178,12 +178,12 @@ public class StatsD: StatsDProtocol
     }
 
     for data in sendBuffer {
-      send(data)
+      send(data: data)
     }
   }
 
   private func send(data:String) {
-    let (success, error) = socket.write(host, port:port, data:data)
+    let (success, error) = socket.write(host: host, port:port, data:data)
     if sendCallback != nil {
       sendCallback!(success, error)
     }
