@@ -1,4 +1,6 @@
 # Introduction
+[![Join the chat at https://gitter.im/nicholasjackson/minke](https://badges.gitter.im/notonthehighstreet/swift-statsd.svg)](https://gitter.im/notonthehighstreet/swift-statsd?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  
+
 Swift statsD is a statsD client implementation for swift.
 
 Due to the incomplete nature of the current Foundation framework on Linux we have implemented a simple UDP socket class using libC.  Currently this library only supports IPV4 and UDP connectivity to a statsD server.  
