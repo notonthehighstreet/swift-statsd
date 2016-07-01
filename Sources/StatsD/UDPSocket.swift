@@ -105,7 +105,7 @@ public class UDPSocket: Socket
       #if os(Linux)
 		    Glibc.close(self.socketfd)
 		  #else
-			  Darwin.close(self.socketfd)
+			   _ = Darwin.close(self.socketfd)
 		  #endif
     }
 

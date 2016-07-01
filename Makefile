@@ -9,8 +9,7 @@ BUILDCOMMAND := "swift build -Xcc -fblocks"
 endif
 
 fetch:
-	swift build --fetch
-	find Packages/ -type d -name Tests | xargs rm -rf
+	swift package fetch
 build: fetch clean
 	@echo --- Building package
 	"$(BUILDCOMMAND)"
