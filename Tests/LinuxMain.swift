@@ -1,6 +1,6 @@
 import XCTest
 
-@testable import StatsDTestSuite
+@testable import StatsDTests
 
 XCTMain([
   testCase(StatsDTests.allTests),

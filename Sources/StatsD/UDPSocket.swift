@@ -103,9 +103,9 @@ public class UDPSocket: Socket
   internal func close() {
     if self.socketfd != UDPSocket.SOCKET_INVALID_DESCRIPTOR {
       #if os(Linux)
-		    Glibc.close(self.socketfd)
+		    _ = Glibc.close(self.socketfd)
 		  #else
-			   _ = Darwin.close(self.socketfd)
+			  _ = Darwin.close(self.socketfd)
 		  #endif
     }
 
