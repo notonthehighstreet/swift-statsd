@@ -118,12 +118,12 @@ class StatsDTests: XCTestCase {
     let duration = buffer.characters.split(separator: ":").map{ String($0) }[1].characters.split(separator: "|").map{ String($0) }[0]
 
     XCTAssertEqual("mybucket", bucket, "Buffer should contain bucket")
-    XCTAssertTrue(Float(duration) > 0, "Buffer should contain duration")
+    XCTAssertTrue(Float(duration)! > 0.0, "Buffer should contain duration")
   }
 
   func testSendsDataAfterInterval() {
     let mockSocket = MockSocket()
-    let ex = expectation(withDescription: "Send data after interval")
+    let ex = expectation(description: "Send data after interval")
 
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: 0.1) {
       (success: Bool, error: SocketError?) in
@@ -137,7 +137,7 @@ class StatsDTests: XCTestCase {
 
     statsD.increment(bucket: "mybucket")
 
-    waitForExpectations(withTimeout: 3) { error in
+    waitForExpectations(timeout: 3) { error in
       if let error = error {
         print("Error: \(error.localizedDescription)")
       }
@@ -146,7 +146,7 @@ class StatsDTests: XCTestCase {
 
   func testSendsDataMultipleTimesAfterInterval() {
     let mockSocket = MockSocket()
-    let ex = expectation(withDescription: "Send data multiple times after interval")
+    let ex = expectation(description: "Send data multiple times after interval")
 
     var statsD: StatsD? = nil
     statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: 0.1) {
@@ -165,7 +165,7 @@ class StatsDTests: XCTestCase {
 
     statsD!.increment(bucket: "mybucket")
 
-    waitForExpectations(withTimeout: 20) { error in
+    waitForExpectations(timeout: 20) { error in
       if let error = error {
         print("Error: \(error.localizedDescription)")
       }
@@ -174,7 +174,7 @@ class StatsDTests: XCTestCase {
 
   func testDisposeStopsSendingData() {
     let mockSocket = MockSocket()
-    let ex = expectation(withDescription: "Send data after interval")
+    let ex = expectation(description: "Send data after interval")
 
     var statsD: StatsD? = nil
     statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: 0.1) {
@@ -186,7 +186,7 @@ class StatsDTests: XCTestCase {
 
     statsD!.increment(bucket: "mybucket")
 
-    waitForExpectations(withTimeout: 20) { error in
+    waitForExpectations(timeout: 20) { error in
       if let error = error {
         print("Error: \(error.localizedDescription)")
       }
@@ -198,7 +198,7 @@ class StatsDTests: XCTestCase {
   }
 
   func testEmptiesBucketAfterSend() {
-    let ex = expectation(withDescription: "Empty bucket after send")
+    let ex = expectation(description: "Empty bucket after send")
     var statsD: StatsD?
     statsD = StatsD(host: "192.168.99.100", port: 8125, socket: MockSocket(), interval: 0.1) {
       (success: Bool, error: SocketError?) in
@@ -212,7 +212,7 @@ class StatsDTests: XCTestCase {
 
     statsD!.increment(bucket: "mybucket")
 
-    waitForExpectations(withTimeout: 20) { error in
+    waitForExpectations(timeout: 20) { error in
       if let error = error {
         print("Error: \(error.localizedDescription)")
       }
@@ -221,7 +221,7 @@ class StatsDTests: XCTestCase {
 
   func testDoesCallbackWithParametersAfterSend() {
     let mockSocket = MockSocket()
-    let ex = expectation(withDescription: "Send data after interval")
+    let ex = expectation(description: "Send data after interval")
     let statsD = StatsD(host: "192.168.99.100", port: 8125, socket: mockSocket, interval: 0.1) {
       (success: Bool, error: SocketError?) in
         XCTAssertTrue(success, "Expected to have returned success on callback")
@@ -235,7 +235,7 @@ class StatsDTests: XCTestCase {
 
     statsD.increment(bucket: "mybucket")
 
-    waitForExpectations(withTimeout: 10) { error in
+    waitForExpectations(timeout: 10) { error in
       if let error = error {
         print("Error: \(error.localizedDescription)")
       }
@@ -244,7 +244,7 @@ class StatsDTests: XCTestCase {
 }
 
 extension StatsDTests {
-    static var allTests: [(String, StatsDTests -> () throws -> Void)] {
+    static var allTests: [(String, (StatsDTests) -> () throws -> Void)] {
         return [
           ("testConvenienceInitSetsCorrectValues", testConvenienceInitSetsCorrectValues),
           ("testInitSetsCorrectValues", testInitSetsCorrectValues),
