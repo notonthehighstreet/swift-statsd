@@ -13,7 +13,7 @@ class UDPSocketTests: XCTestCase {
 }
 
 extension UDPSocketTests {
-    static var allTests: [(String, UDPSocketTests -> () throws -> Void)] {
+    static var allTests: [(String, (UDPSocketTests) -> () throws -> Void)] {
         return [
             ("testSocket", testSocket),
         ]

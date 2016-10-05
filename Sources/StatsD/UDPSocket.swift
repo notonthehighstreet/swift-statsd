@@ -22,7 +22,7 @@ public class UDPSocket: Socket
 
   public init() {}
 
-  private func createSocket() throws -> Void{
+  internal func createSocket() throws -> Void{
     #if os(Linux)
 		   self.socketfd = Glibc.socket(UDPSocket.IPV4, UDPSocket.DGRAM, UDPSocket.UDP)
 	  #else
@@ -36,7 +36,7 @@ public class UDPSocket: Socket
 		}
   }
 
-  private func setAddressInfo(host: String, port: Int) throws -> UnsafeMutablePointer<addrinfo>? {
+  internal func setAddressInfo(host: String, port: Int) throws -> UnsafeMutablePointer<addrinfo>? {
     #if os(Linux)
 			var hints = addrinfo(
 				ai_flags: AI_PASSIVE,
@@ -60,7 +60,7 @@ public class UDPSocket: Socket
 		#endif
 
 		// Retrieve the info on our target...
-    var targetInfo: UnsafeMutablePointer<addrinfo>? = UnsafeMutablePointer<addrinfo>(allocatingCapacity: 1)
+    var targetInfo: UnsafeMutablePointer<addrinfo>? = UnsafeMutablePointer<addrinfo>.allocate(capacity: 1)
 		let status: Int32 = getaddrinfo(host, String(port), &hints, &targetInfo)
 
     if status != 0 {
@@ -70,11 +70,11 @@ public class UDPSocket: Socket
     return targetInfo
   }
 
-  private func sendData(data: String, targetInfo: UnsafeMutablePointer<addrinfo>) throws -> Void {
+  internal func sendData(data: String, targetInfo: UnsafeMutablePointer<addrinfo>) throws -> Void {
     var sendFlags: Int32 = 0
     var size:Int = 0
 
-    data.nulTerminatedUTF8.withUnsafeBufferPointer() {
+    data.utf8CString.withUnsafeBufferPointer() {
 			// The count returned by nullTerminatedUTF8 includes the null terminator...
       #if os(Linux)
   		  size = Glibc.sendto(
@@ -100,7 +100,7 @@ public class UDPSocket: Socket
     }
   }
 
-  private func close() {
+  internal func close() {
     if self.socketfd != UDPSocket.SOCKET_INVALID_DESCRIPTOR {
       #if os(Linux)
 		    Glibc.close(self.socketfd)
@@ -116,7 +116,7 @@ public class UDPSocket: Socket
 extension UDPSocket {
   public func write(host: String, port: Int, data: String) -> (Bool, SocketError?){
     do {
-      try createSocket()
+      try self.createSocket()
       defer {
         close()
       }

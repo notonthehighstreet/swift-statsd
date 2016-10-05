@@ -9,7 +9,7 @@ public class StatsD: StatsDProtocol
   var socket:Socket
   var sendCallback:((Bool, SocketError?) -> Void)?
 
-  let queue: dispatch_queue_t
+  let queue:DispatchQueue 
   var running = false
   let sendInterval: Double
 
@@ -73,7 +73,7 @@ public class StatsD: StatsDProtocol
 
     self.running = true
 
-    queue = dispatch_queue_create("statsd_queue." + String(NSDate().timeIntervalSince1970), DISPATCH_QUEUE_CONCURRENT)
+    queue = DispatchQueue(label: "com.notonthehighstreet.statsd." + String(NSDate().timeIntervalSince1970))
     sendLoop(interval: self.sendInterval)
   }
 
@@ -150,14 +150,13 @@ public class StatsD: StatsDProtocol
   }
 
   private func sendLoop(interval: Double) {
-    let i = Int64(interval * Double(NSEC_PER_SEC))
-    let delay = dispatch_time(DISPATCH_TIME_NOW, i)
-    dispatch_after(delay, self.queue, {
+    let delay = DispatchTime.now() + interval
+    self.queue.asyncAfter(deadline: delay, qos: .default, flags: DispatchWorkItemFlags()) {
       if(self.running) {
         self.sendBuffer() // send any data in the buffer
         self.sendLoop(interval: interval) // restart the timer
       }
-    })
+    }
   }
 
   // This is not the most efficient way to do this, multiple counts can be concatonated and sent
